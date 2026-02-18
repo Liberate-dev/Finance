@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, ReactNode } from 'react';
+import { useEffect, useState, useRef, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useFinanceStore } from '@/lib/store';
@@ -15,69 +15,68 @@ export default function AppProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
     const pathname = usePathname();
     const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
+    const hasFetched = useRef(false);
 
     useEffect(() => {
-        // On auth routes (login/register), skip fetching user data — show UI immediately
-        if (isAuthRoute) {
-            setIsReady(true);
-            return;
-        }
-
         let mounted = true;
 
-        const init = async () => {
+        const loadUser = async (userId: string) => {
+            if (hasFetched.current) return; // Prevent double-fetch
+            hasFetched.current = true;
+            setUserId(userId);
             try {
-                const { data: { user }, error } = await supabase.auth.getUser();
+                await fetchAll();
+            } catch (err) {
+                console.warn('Data fetch failed:', err);
+            }
+            if (mounted) setIsReady(true);
+        };
+
+        // 1. Quick initial check using cached session (no network call)
+        const initSession = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
                 if (!mounted) return;
 
-                if (error) {
-                    console.warn('Auth check failed:', error.message);
+                if (session?.user) {
+                    await loadUser(session.user.id);
+                } else {
                     setIsReady(true);
-                    return;
                 }
-
-                if (user) {
-                    setUserId(user.id);
-                    try {
-                        await fetchAll();
-                    } catch (fetchErr) {
-                        console.warn('Data fetch failed:', fetchErr);
-                    }
-                }
-            } catch (err) {
-                console.warn('Init error:', err);
-            } finally {
+            } catch {
                 if (mounted) setIsReady(true);
             }
         };
 
-        init();
+        initSession();
 
-        // Safety timeout — if init takes too long, show the app anyway
-        const timeout = setTimeout(() => {
-            if (!isReady && mounted) {
-                console.warn('Init timeout — showing app anyway');
-                setIsReady(true);
-            }
-        }, 5000);
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session?.user) {
-                setUserId(session.user.id);
-                try {
-                    await fetchAll();
-                } catch (err) {
-                    console.warn('Auth state fetch failed:', err);
+        // 2. Listen for auth changes (login, logout, token refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    hasFetched.current = false; // Reset for fresh fetch
+                    await loadUser(session.user.id);
+                } else if (event === 'SIGNED_OUT') {
+                    hasFetched.current = false;
+                    setUserId('');
                 }
             }
-        });
+        );
+
+        // 3. Safety timeout — show app after 3s max
+        const timeout = setTimeout(() => {
+            if (mounted && !isReady) {
+                console.warn('Init timeout — showing app');
+                setIsReady(true);
+            }
+        }, 3000);
 
         return () => {
             mounted = false;
             clearTimeout(timeout);
             subscription.unsubscribe();
         };
-    }, [isAuthRoute]);
+    }, []); // No dependencies — only run once
 
     if (!isReady) {
         return (
@@ -95,3 +94,4 @@ export default function AppProvider({ children }: { children: ReactNode }) {
         </ToastProvider>
     );
 }
+

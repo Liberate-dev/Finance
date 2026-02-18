@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import styles from './login.module.css';
@@ -15,6 +16,7 @@ export default function LoginPage() {
     const [success, setSuccess] = useState('');
 
     const supabase = createClient();
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,7 +28,8 @@ export default function LoginPage() {
             if (isLogin) {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                window.location.href = '/';
+                router.push('/');
+                router.refresh();
             } else {
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
