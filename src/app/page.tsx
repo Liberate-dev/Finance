@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFinanceStore } from '@/lib/store';
 import { formatCurrency, formatDateShort, getMonthlySpending, getMonthlyIncome, getTotalBalance } from '@/lib/helpers';
-import { TrendingUp, TrendingDown, Wallet, Plus, ArrowRight, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Plus, ArrowRight, AlertTriangle, Lock, ShieldCheck } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { format, subDays } from 'date-fns';
 import styles from './dashboard.module.css';
@@ -17,6 +17,17 @@ export default function DashboardPage() {
   const monthlyIncome = useMemo(() => getMonthlyIncome(transactions), [transactions]);
   const monthlyExpense = useMemo(() => getMonthlySpending(transactions), [transactions]);
   const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
+
+  // Available Balance = Total Saldo - unspent budget allocations
+  const budgetReserved = useMemo(() => {
+    return budgets.reduce((total, budget) => {
+      const spent = getMonthlySpending(transactions, budget.category);
+      const remaining = Math.max(budget.limit_amount - spent, 0);
+      return total + remaining;
+    }, 0);
+  }, [budgets, transactions]);
+
+  const availableBalance = useMemo(() => balance - budgetReserved, [balance, budgetReserved]);
 
   // Budget alerts
   const budgetAlerts = useMemo(() => {
@@ -56,17 +67,31 @@ export default function DashboardPage() {
     <div className="page">
       <h1 className="page-title">Dashboard</h1>
 
-      {/* Stat Cards */}
-      <div className="grid-3" style={{ marginBottom: 'var(--space-lg)' }}>
-        <div className="stat-card">
-          <div className="stat-label">
-            <Wallet size={14} style={{ display: 'inline', marginRight: 4 }} />
-            Saldo
-          </div>
-          <div className={`stat-value ${balance >= 0 ? 'income' : 'expense'}`}>
-            {formatCurrency(balance)}
-          </div>
+      {/* Available Balance - Hero Card */}
+      <div className="card-flat" style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-lg)', background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(108,92,231,0.08) 100%)', borderColor: 'rgba(108,92,231,0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <ShieldCheck size={14} style={{ color: 'var(--accent-primary-light)' }} />
+          <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Saldo Tersedia</span>
         </div>
+        <div style={{ fontSize: 'var(--font-3xl)', fontWeight: 800, color: availableBalance >= 0 ? 'var(--income)' : 'var(--expense)', lineHeight: 1.2 }}>
+          {formatCurrency(availableBalance)}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginTop: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-xs)', color: 'var(--text-secondary)' }}>
+            <Wallet size={12} />
+            Saldo Bank: <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{formatCurrency(balance)}</span>
+          </div>
+          {budgetReserved > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-xs)', color: 'var(--warning)' }}>
+              <Lock size={12} />
+              Dialokasikan: {formatCurrency(budgetReserved)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Monthly Stats */}
+      <div className="grid-2" style={{ marginBottom: 'var(--space-lg)' }}>
         <div className="stat-card">
           <div className="stat-label">
             <TrendingUp size={14} style={{ display: 'inline', marginRight: 4 }} />
