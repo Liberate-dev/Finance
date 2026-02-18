@@ -1,13 +1,20 @@
 'use client';
 
 import { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useFinanceStore } from '@/lib/store';
 import { formatCurrency, formatDateShort, getMonthlySpending, getMonthlyIncome, getTotalBalance, getMonthlyTransactions } from '@/lib/helpers';
 import { TrendingUp, TrendingDown, Wallet, Plus, ArrowRight, AlertTriangle } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import styles from './dashboard.module.css';
+
+// Lazy-load Recharts to avoid SSR issues and improve performance
+const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
+const Area = dynamic(() => import('recharts').then(m => m.Area), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false });
 
 export default function DashboardPage() {
   const { transactions, budgets, categories, isLoading } = useFinanceStore();

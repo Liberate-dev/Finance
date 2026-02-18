@@ -53,28 +53,36 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
     fetchAll: async () => {
         const userId = get().userId;
-        if (!userId) return;
+        if (!userId) {
+            set({ isLoading: false });
+            return;
+        }
 
         set({ isLoading: true });
 
-        const [transRes, budgetRes, catRes, billRes] = await Promise.all([
-            supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
-            supabase.from('budgets').select('*').eq('user_id', userId),
-            supabase.from('categories').select('*').eq('user_id', userId),
-            supabase.from('bills').select('*').eq('user_id', userId).order('next_due', { ascending: true }),
-        ]);
+        try {
+            const [transRes, budgetRes, catRes, billRes] = await Promise.all([
+                supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
+                supabase.from('budgets').select('*').eq('user_id', userId),
+                supabase.from('categories').select('*').eq('user_id', userId),
+                supabase.from('bills').select('*').eq('user_id', userId).order('next_due', { ascending: true }),
+            ]);
 
-        set({
-            transactions: transRes.data || [],
-            budgets: budgetRes.data || [],
-            categories: catRes.data || [],
-            bills: billRes.data || [],
-            isLoading: false,
-        });
+            set({
+                transactions: transRes.data || [],
+                budgets: budgetRes.data || [],
+                categories: catRes.data || [],
+                bills: billRes.data || [],
+                isLoading: false,
+            });
 
-        // Initialize default categories if none exist
-        if (!catRes.data || catRes.data.length === 0) {
-            await get().initializeCategories();
+            // Initialize default categories if none exist
+            if (!catRes.data || catRes.data.length === 0) {
+                await get().initializeCategories();
+            }
+        } catch (err) {
+            console.warn('fetchAll error:', err);
+            set({ isLoading: false });
         }
     },
 
