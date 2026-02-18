@@ -97,13 +97,22 @@
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: 6px 12px;
+    padding: 4px 0;
     color: var(--text-tertiary);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 500;
     transition: color 0.2s ease;
     min-width: 0;
     flex: 1;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 480px) {
+    .bottomTab {
+        font-size: 10px;
+        padding: 6px 8px;
+    }
 }
 
 .bottomTab.active {
@@ -112,4 +121,10 @@
 
 .bottomTab:hover {
     color: var(--text-primary);
+}
+
+.bottomTab svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
 }
