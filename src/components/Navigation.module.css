@@ -1,0 +1,115 @@
+/* Sidebar - Desktop only */
+.sidebar {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: var(--space-lg);
+    z-index: 40;
+    flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+    .sidebar {
+        display: flex;
+    }
+}
+
+.sidebarBrand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) 0;
+    margin-bottom: var(--space-xl);
+}
+
+.brandIcon {
+    font-size: 28px;
+}
+
+.brandText {
+    font-size: var(--font-xl);
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.sidebarNav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.sidebarLink {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 12px var(--space-md);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: var(--font-sm);
+    transition: all 0.2s ease;
+}
+
+.sidebarLink:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.sidebarLink.active {
+    background: rgba(108, 92, 231, 0.15);
+    color: var(--accent-primary-light);
+}
+
+/* Bottom Nav - Mobile only */
+.bottomNav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottom-nav-height);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: var(--safe-bottom);
+    z-index: 40;
+    backdrop-filter: blur(10px);
+}
+
+@media (min-width: 1024px) {
+    .bottomNav {
+        display: none;
+    }
+}
+
+.bottomTab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    min-width: 0;
+    flex: 1;
+}
+
+.bottomTab.active {
+    color: var(--accent-primary-light);
+}
+
+.bottomTab:hover {
+    color: var(--text-primary);
+}

@@ -1,0 +1,106 @@
+.uploadArea {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-xl) 0;
+}
+
+.uploadBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-2xl);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
+    width: 100%;
+    max-width: 400px;
+}
+
+.uploadBox:hover {
+    border-color: var(--accent-primary);
+    background: rgba(108, 92, 231, 0.05);
+}
+
+.uploadBox h3 {
+    font-size: var(--font-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.uploadBox p {
+    font-size: var(--font-sm);
+    color: var(--text-tertiary);
+}
+
+.processing {
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.processingOverlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.previewImage {
+    width: 100%;
+    max-width: 400px;
+    border-radius: var(--radius-lg);
+    display: block;
+    margin: 0 auto;
+}
+
+.spinIcon {
+    animation: spin 1s linear infinite;
+    color: var(--accent-primary);
+}
+
+.ocrDetails {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.ocrDetails summary {
+    cursor: pointer;
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.ocrText {
+    margin-top: var(--space-md);
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: monospace;
+}
+
+.doneState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-2xl) 0;
+}
+
+.doneIcon {
+    font-size: 64px;
+    margin-bottom: var(--space-md);
+}
