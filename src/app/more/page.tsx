@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Target, BarChart3, Settings } from 'lucide-react';
+import { Target, BarChart3, Settings, ScanLine } from 'lucide-react';
 
 export default function MorePage() {
     const links = [
+        { href: '/scan', icon: ScanLine, label: 'Scan Receipt', desc: 'Scan struk belanja dan catat otomatis' },
         { href: '/budget', icon: Target, label: 'Budget', desc: 'Atur batas pengeluaran per kategori' },
         { href: '/reports', icon: BarChart3, label: 'Laporan', desc: 'Lihat grafik dan analisis keuangan' },
         { href: '/settings', icon: Settings, label: 'Pengaturan', desc: 'Akun, export data, dan lainnya' },
