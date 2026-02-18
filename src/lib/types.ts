@@ -48,6 +48,19 @@ export interface Bill {
     created_at: string;
 }
 
+export interface SavingsGoal {
+    id: string;
+    user_id: string;
+    name: string;
+    target_amount: number;
+    saved_amount: number;
+    icon: string;
+    color: string;
+    deadline?: string;
+    is_completed: boolean;
+    created_at: string;
+}
+
 export interface AppUser {
     id: string;
     email: string;

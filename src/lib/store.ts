@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Transaction, Budget, Category, Bill, DEFAULT_CATEGORIES } from './types';
+import { Transaction, Budget, Category, Bill, SavingsGoal, DEFAULT_CATEGORIES } from './types';
 import { createClient } from './supabase/client';
 import { generateId, todayISO } from './helpers';
 
@@ -9,6 +9,7 @@ interface FinanceState {
     budgets: Budget[];
     categories: Category[];
     bills: Bill[];
+    savingsGoals: SavingsGoal[];
     isLoading: boolean;
     userId: string | null;
 
@@ -37,6 +38,12 @@ interface FinanceState {
     updateBill: (id: string, b: Partial<Bill>) => Promise<void>;
     deleteBill: (id: string) => Promise<void>;
     markBillPaid: (id: string) => Promise<void>;
+
+    // Savings Goals
+    addSavingsGoal: (g: Omit<SavingsGoal, 'id' | 'user_id' | 'created_at'>) => Promise<void>;
+    updateSavingsGoal: (id: string, g: Partial<SavingsGoal>) => Promise<void>;
+    deleteSavingsGoal: (id: string) => Promise<void>;
+    addSaving: (id: string, amount: number) => Promise<void>;
 }
 
 const supabase = createClient();
@@ -46,6 +53,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     budgets: [],
     categories: [],
     bills: [],
+    savingsGoals: [],
     isLoading: true,
     userId: null,
 
@@ -61,11 +69,12 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         set({ isLoading: true });
 
         try {
-            const [transRes, budgetRes, catRes, billRes] = await Promise.all([
+            const [transRes, budgetRes, catRes, billRes, goalsRes] = await Promise.all([
                 supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
                 supabase.from('budgets').select('*').eq('user_id', userId),
                 supabase.from('categories').select('*').eq('user_id', userId),
                 supabase.from('bills').select('*').eq('user_id', userId).order('next_due', { ascending: true }),
+                supabase.from('savings_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             ]);
 
             set({
@@ -73,6 +82,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
                 budgets: budgetRes.data || [],
                 categories: catRes.data || [],
                 bills: billRes.data || [],
+                savingsGoals: goalsRes.data || [],
                 isLoading: false,
             });
 
@@ -234,4 +244,46 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
         await get().updateBill(id, { next_due: nextDue });
     },
+
+    // Savings Goals
+    addSavingsGoal: async (g) => {
+        const userId = get().userId;
+        if (!userId) return;
+
+        const newGoal: SavingsGoal = {
+            ...g,
+            id: generateId(),
+            user_id: userId,
+            created_at: new Date().toISOString(),
+        };
+
+        set((s) => ({ savingsGoals: [newGoal, ...s.savingsGoals] }));
+        await supabase.from('savings_goals').insert(newGoal);
+    },
+
+    updateSavingsGoal: async (id, g) => {
+        set((s) => ({
+            savingsGoals: s.savingsGoals.map((goal) => (goal.id === id ? { ...goal, ...g } : goal)),
+        }));
+        await supabase.from('savings_goals').update(g).eq('id', id);
+    },
+
+    deleteSavingsGoal: async (id) => {
+        set((s) => ({ savingsGoals: s.savingsGoals.filter((goal) => goal.id !== id) }));
+        await supabase.from('savings_goals').delete().eq('id', id);
+    },
+
+    addSaving: async (id, amount) => {
+        const goal = get().savingsGoals.find((g) => g.id === id);
+        if (!goal) return;
+
+        const newSaved = goal.saved_amount + amount;
+        const isCompleted = newSaved >= goal.target_amount;
+
+        await get().updateSavingsGoal(id, {
+            saved_amount: newSaved,
+            is_completed: isCompleted,
+        });
+    },
 }));
+

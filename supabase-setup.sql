@@ -117,6 +117,37 @@ create policy "Users can delete own bills"
 create index if not exists idx_bills_user_due
   on bills (user_id, next_due);
 
+-- 5. SAVINGS GOALS
+create table if not exists savings_goals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  name text not null,
+  target_amount numeric not null check (target_amount > 0),
+  saved_amount numeric not null default 0 check (saved_amount >= 0),
+  icon text not null default '🎯',
+  color text not null default '#6c5ce7',
+  deadline date,
+  is_completed boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table savings_goals enable row level security;
+
+create policy "Users can view own savings_goals"
+  on savings_goals for select using (auth.uid() = user_id);
+
+create policy "Users can insert own savings_goals"
+  on savings_goals for insert with check (auth.uid() = user_id);
+
+create policy "Users can update own savings_goals"
+  on savings_goals for update using (auth.uid() = user_id);
+
+create policy "Users can delete own savings_goals"
+  on savings_goals for delete using (auth.uid() = user_id);
+
+create index if not exists idx_savings_goals_user
+  on savings_goals (user_id, created_at desc);
+
 -- =============================================
 -- DONE! Semua tabel sudah dibuat dengan RLS.
 -- Sekarang kamu bisa daftar akun di app.

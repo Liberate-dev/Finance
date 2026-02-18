@@ -12,14 +12,15 @@ import {
     BarChart3,
     Settings,
     LogOut,
+    PiggyBank,
 } from 'lucide-react';
 import styles from './Navigation.module.css';
 
 const bottomTabs = [
     { href: '/', icon: LayoutDashboard, label: 'Home' },
     { href: '/transactions', icon: ArrowLeftRight, label: 'Transaksi' },
+    { href: '/goals', icon: PiggyBank, label: 'Target' },
     { href: '/bills', icon: FileText, label: 'Tagihan' },
-    { href: '/scan', icon: ScanLine, label: 'Scan' },
     { href: '/more', icon: MoreHorizontal, label: 'Lainnya' },
 ];
 
@@ -28,6 +29,7 @@ const sidebarLinks = [
     { href: '/transactions', icon: ArrowLeftRight, label: 'Transaksi' },
     { href: '/bills', icon: FileText, label: 'Tagihan' },
     { href: '/budget', icon: Target, label: 'Budget' },
+    { href: '/goals', icon: PiggyBank, label: 'Target' },
     { href: '/scan', icon: ScanLine, label: 'Scan Receipt' },
     { href: '/reports', icon: BarChart3, label: 'Laporan' },
     { href: '/settings', icon: Settings, label: 'Pengaturan' },
