@@ -19,10 +19,10 @@ export default function SettingsPage() {
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [userEmail, setUserEmail] = useState('');
 
-    // Get user email
+    // Get user email from cached session (no network call)
     useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => {
-            if (data.user) setUserEmail(data.user.email || '');
+        supabase.auth.getSession().then(({ data }) => {
+            if (data.session?.user) setUserEmail(data.session.user.email || '');
         });
     }, []);
 

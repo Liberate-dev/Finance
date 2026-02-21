@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useFinanceStore } from '@/lib/store';
-import { formatCurrency, getMonthlySpending } from '@/lib/helpers';
+import { formatCurrency, getMonthlyStats } from '@/lib/helpers';
 import { useToast } from '@/components/Toast';
 import Modal from '@/components/Modal';
 import { Plus, Target, Trash2, Edit3 } from 'lucide-react';
@@ -23,15 +23,17 @@ export default function BudgetPage() {
         [categories]
     );
 
+    const monthlyStats = useMemo(() => getMonthlyStats(transactions), [transactions]);
+
     const budgetData = useMemo(() => {
         return budgets.map((b) => {
-            const spent = getMonthlySpending(transactions, b.category);
+            const spent = monthlyStats.byCategory[b.category] || 0;
             const percentage = b.limit_amount > 0 ? (spent / b.limit_amount) * 100 : 0;
             const remaining = b.limit_amount - spent;
             const catInfo = categories.find((c) => c.name === b.category);
             return { ...b, spent, percentage, remaining, catInfo };
         });
-    }, [budgets, transactions, categories]);
+    }, [budgets, monthlyStats, categories]);
 
     const totalBudget = useMemo(() => budgets.reduce((s, b) => s + b.limit_amount, 0), [budgets]);
     const totalSpent = useMemo(() => budgetData.reduce((s, b) => s + b.spent, 0), [budgetData]);

@@ -67,6 +67,33 @@ export function getTotalBalance(transactions: Transaction[]): number {
     }, 0);
 }
 
+// Single-pass monthly stats: computes income, total expense, and per-category expense in one iteration
+export function getMonthlyStats(transactions: Transaction[], monthDate?: Date): {
+    income: number;
+    expense: number;
+    byCategory: Record<string, number>;
+} {
+    const target = monthDate || new Date();
+    const start = startOfMonth(target);
+    const end = endOfMonth(target);
+
+    const result = { income: 0, expense: 0, byCategory: {} as Record<string, number> };
+
+    for (const t of transactions) {
+        const d = parseISO(t.date);
+        if (!isWithinInterval(d, { start, end })) continue;
+
+        if (t.type === 'income') {
+            result.income += t.amount;
+        } else {
+            result.expense += t.amount;
+            result.byCategory[t.category] = (result.byCategory[t.category] || 0) + t.amount;
+        }
+    }
+
+    return result;
+}
+
 // Calculate next due date for a bill
 export function getNextDueDate(currentDue: string, frequency: BillFrequency, customDays?: number): string {
     const date = parseISO(currentDue);

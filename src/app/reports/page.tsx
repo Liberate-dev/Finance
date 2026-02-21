@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useFinanceStore } from '@/lib/store';
-import { formatCurrency, getMonthlySpending, getMonthlyIncome } from '@/lib/helpers';
+import { formatCurrency, getMonthlyStats } from '@/lib/helpers';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
     Tooltip, LineChart, Line, CartesianGrid,
@@ -15,35 +15,39 @@ export default function ReportsPage() {
     const { transactions, categories } = useFinanceStore();
     const [activeTab, setActiveTab] = useState<'overview' | 'category' | 'trend'>('overview');
 
-    // Monthly category breakdown (pie chart)
+    // Single-pass current month stats
+    const currentStats = useMemo(() => getMonthlyStats(transactions), [transactions]);
+
+    // Monthly category breakdown (pie chart) - uses pre-computed stats
     const categoryData = useMemo(() => {
         const expenseCats = categories.filter((c) => c.type === 'expense');
         return expenseCats
             .map((cat) => ({
                 name: cat.name,
-                value: getMonthlySpending(transactions, cat.name),
+                value: currentStats.byCategory[cat.name] || 0,
                 color: cat.color,
             }))
             .filter((d) => d.value > 0)
             .sort((a, b) => b.value - a.value);
-    }, [transactions, categories]);
+    }, [currentStats, categories]);
 
-    // 6-month trend
+    // 6-month trend - one getMonthlyStats call per month instead of 2
     const trendData = useMemo(() => {
         const months = [];
         for (let i = 5; i >= 0; i--) {
             const monthDate = subMonths(new Date(), i);
+            const stats = getMonthlyStats(transactions, monthDate);
             months.push({
                 month: format(monthDate, 'MMM', { locale: idLocale }),
-                income: getMonthlyIncome(transactions, monthDate),
-                expense: getMonthlySpending(transactions, undefined, monthDate),
+                income: stats.income,
+                expense: stats.expense,
             });
         }
         return months;
     }, [transactions]);
 
-    const totalMonthExpense = useMemo(() => getMonthlySpending(transactions), [transactions]);
-    const totalMonthIncome = useMemo(() => getMonthlyIncome(transactions), [transactions]);
+    const totalMonthExpense = currentStats.expense;
+    const totalMonthIncome = currentStats.income;
 
     const tooltipStyle = {
         contentStyle: {

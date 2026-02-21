@@ -21,9 +21,18 @@ export default function AppProvider({ children }: { children: ReactNode }) {
         let mounted = true;
 
         const loadUser = async (userId: string) => {
-            if (hasFetched.current) return; // Prevent double-fetch
+            if (hasFetched.current) return;
             hasFetched.current = true;
             setUserId(userId);
+
+            // Show cached data immediately if available from localStorage
+            const state = useFinanceStore.getState();
+            const hasCachedData = state.userId && state.transactions.length > 0;
+            if (hasCachedData && mounted) {
+                setIsReady(true);
+            }
+
+            // Fetch fresh data (in background if cached data shown)
             try {
                 await fetchAll();
             } catch (err) {
@@ -54,7 +63,7 @@ export default function AppProvider({ children }: { children: ReactNode }) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 if (event === 'SIGNED_IN' && session?.user) {
-                    hasFetched.current = false; // Reset for fresh fetch
+                    hasFetched.current = false;
                     await loadUser(session.user.id);
                 } else if (event === 'SIGNED_OUT') {
                     hasFetched.current = false;
@@ -63,20 +72,19 @@ export default function AppProvider({ children }: { children: ReactNode }) {
             }
         );
 
-        // 3. Safety timeout — show app after 3s max
+        // 3. Safety timeout — show app after 1.5s max (reduced from 3s)
         const timeout = setTimeout(() => {
             if (mounted && !isReady) {
-                console.warn('Init timeout — showing app');
                 setIsReady(true);
             }
-        }, 3000);
+        }, 1500);
 
         return () => {
             mounted = false;
             clearTimeout(timeout);
             subscription.unsubscribe();
         };
-    }, []); // No dependencies — only run once
+    }, []);
 
     if (!isReady) {
         return (

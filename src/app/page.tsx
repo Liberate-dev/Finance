@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFinanceStore } from '@/lib/store';
-import { formatCurrency, formatDateShort, getMonthlySpending, getMonthlyIncome, getTotalBalance } from '@/lib/helpers';
+import { formatCurrency, formatDateShort, getMonthlyStats, getTotalBalance } from '@/lib/helpers';
 import { TrendingUp, TrendingDown, Wallet, Plus, ArrowRight, AlertTriangle, Lock, ShieldCheck } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { format, subDays } from 'date-fns';
@@ -14,33 +14,35 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const balance = useMemo(() => getTotalBalance(transactions), [transactions]);
-  const monthlyIncome = useMemo(() => getMonthlyIncome(transactions), [transactions]);
-  const monthlyExpense = useMemo(() => getMonthlySpending(transactions), [transactions]);
   const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
 
-  // Available Balance = Total Saldo - unspent budget allocations
-  const budgetReserved = useMemo(() => {
-    return budgets.reduce((total, budget) => {
-      const spent = getMonthlySpending(transactions, budget.category);
+  // Single-pass monthly stats: income, expense, and per-category spending
+  const monthlyStats = useMemo(() => getMonthlyStats(transactions), [transactions]);
+  const monthlyIncome = monthlyStats.income;
+  const monthlyExpense = monthlyStats.expense;
+
+  // Combined budget calculations: reserved amount + alerts in one loop
+  const { budgetReserved, budgetAlerts } = useMemo(() => {
+    let reserved = 0;
+    const alerts: Array<typeof budgets[0] & { spent: number; percentage: number; categoryInfo: typeof categories[0] | undefined }> = [];
+
+    for (const budget of budgets) {
+      const spent = monthlyStats.byCategory[budget.category] || 0;
       const remaining = Math.max(budget.limit_amount - spent, 0);
-      return total + remaining;
-    }, 0);
-  }, [budgets, transactions]);
+      reserved += remaining;
 
-  const availableBalance = useMemo(() => balance - budgetReserved, [balance, budgetReserved]);
-
-  // Budget alerts
-  const budgetAlerts = useMemo(() => {
-    return budgets
-      .map((budget) => {
-        const spent = getMonthlySpending(transactions, budget.category);
-        const percentage = (spent / budget.limit_amount) * 100;
+      const percentage = (spent / budget.limit_amount) * 100;
+      if (percentage >= 80) {
         const categoryInfo = categories.find((c) => c.name === budget.category);
-        return { ...budget, spent, percentage, categoryInfo };
-      })
-      .filter((b) => b.percentage >= 80)
-      .sort((a, b) => b.percentage - a.percentage);
-  }, [budgets, transactions, categories]);
+        alerts.push({ ...budget, spent, percentage, categoryInfo });
+      }
+    }
+
+    alerts.sort((a, b) => b.percentage - a.percentage);
+    return { budgetReserved: reserved, budgetAlerts: alerts };
+  }, [budgets, monthlyStats, categories]);
+
+  const availableBalance = balance - budgetReserved;
 
   // 7-day spending chart
   const chartData = useMemo(() => {

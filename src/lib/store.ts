@@ -73,11 +73,11 @@ export const useFinanceStore = create<FinanceState>()(
 
                 try {
                     const [transRes, budgetRes, catRes, billRes, goalsRes] = await Promise.all([
-                        supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
-                        supabase.from('budgets').select('*').eq('user_id', userId),
-                        supabase.from('categories').select('*').eq('user_id', userId),
-                        supabase.from('bills').select('*').eq('user_id', userId).order('next_due', { ascending: true }),
-                        supabase.from('savings_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+                        supabase.from('transactions').select('id, user_id, date, amount, type, category, description, created_at').eq('user_id', userId).order('date', { ascending: false }),
+                        supabase.from('budgets').select('id, user_id, category, limit_amount, period, created_at').eq('user_id', userId),
+                        supabase.from('categories').select('id, user_id, name, icon, color, type').eq('user_id', userId),
+                        supabase.from('bills').select('id, user_id, name, amount, category, frequency, custom_days, due_date, next_due, is_active, remind_days_before, auto_record, created_at').eq('user_id', userId).order('next_due', { ascending: true }),
+                        supabase.from('savings_goals').select('id, user_id, name, target_amount, saved_amount, icon, color, deadline, is_completed, created_at').eq('user_id', userId).order('created_at', { ascending: false }),
                     ]);
 
                     set({
