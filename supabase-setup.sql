@@ -27,6 +27,9 @@ create policy "Users can update own categories"
 create policy "Users can delete own categories"
   on categories for delete using (auth.uid() = user_id);
 
+create index if not exists idx_categories_user
+  on categories (user_id);
+
 -- 2. TRANSACTIONS
 create table if not exists transactions (
   id uuid primary key default gen_random_uuid(),
@@ -81,6 +84,9 @@ create policy "Users can update own budgets"
 
 create policy "Users can delete own budgets"
   on budgets for delete using (auth.uid() = user_id);
+
+create index if not exists idx_budgets_user
+  on budgets (user_id);
 
 -- 4. BILLS
 create table if not exists bills (
